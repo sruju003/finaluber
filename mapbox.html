@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            overflow-x: hidden; /* Disable horizontal scrolling */
+        }
+
+        body {
+            background-color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100%;
+            max-width: 100%;
+            overflow: hidden;
+            position: relative; /* Add this to make positioning easier */
+        }
+
+        .phone-screen {
+            width: 100%; /* Responsive width */
+            max-width: 414px; /* Max phone screen width */
+            height: 100vh;
+            background-color: #1f1f1f;
+            overflow-y: auto; /* Enable vertical scrolling if content exceeds the screen */
+            z-index: 0;
+            position: relative; /* Add this for proper positioning */
+        }
+
+        /* Always set the map height explicitly to define the size of the div element that contains the map. */
+    #map {
+      height: 100%;
+    }
+
+
+    </style>
+</head>
+<body>
+    <div class="phone-screen">
+
+
+
+        <div id="map"></div>
+
+  <script>
+let map, infoWindow;
+let rectangle; // Declare the rectangle outside the initMap function
+
+function initMap() {
+  map = new google.maps.Map(document.getElementById("map"), {
+    center: { lat: 12.9351, lng: 77.5360 },
+    zoom: 17,
+  });
+  
+  infoWindow = new google.maps.InfoWindow();
+
+  const locationButton = document.createElement("button");
+
+  locationButton.textContent = "Pan to Current Location";
+  locationButton.classList.add("custom-map-control-button");
+  map.controls[google.maps.ControlPosition.TOP_CENTER].push(locationButton);
+  
+  locationButton.addEventListener("click", () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const pos = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          };
+
+          infoWindow.setPosition(pos);
+          infoWindow.setContent("Location found.");
+          infoWindow.open(map);
+          map.setCenter(pos);
+          
+          // Update the bounds of the existing rectangle
+          const bounds = {
+            north: pos.lat + 0.001,
+            south: pos.lat - 0.001,
+            east: pos.lng + 0.001,
+            west: pos.lng - 0.001,
+          };
+
+          if (!rectangle) {
+            rectangle = new google.maps.Rectangle({
+              bounds: bounds,
+              editable: true,
+              draggable: true,
+              map: map,
+            });
+
+            ["bounds_changed", "dragstart", "drag", "dragend"].forEach((eventName) => {
+              rectangle.addListener(eventName, () => {
+                console.log({ bounds: rectangle.getBounds()?.toJSON(), eventName });
+              });
+            });
+          } else {
+            rectangle.setBounds(bounds);
+          }
+        },
+        () => {
+          handleLocationError(true, infoWindow, map.getCenter());
+        },
+      );
+    } else {
+      handleLocationError(false, infoWindow, map.getCenter());
+    }
+  });
+}
+
+function handleLocationError(browserHasGeolocation, infoWindow, pos) {
+  infoWindow.setPosition(pos);
+  infoWindow.setContent(
+    browserHasGeolocation
+      ? "Error: The Geolocation service failed."
+      : "Error: Your browser doesn't support geolocation.",
+  );
+  infoWindow.open(map);
+}
+
+window.initMap = initMap;
+
+  </script>
+
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+  <!-- jsFiddle will insert css and js -->
+
+
+
+  <script
+src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg&callback=initMap&libraries=places&v=weekly"
+defer
+></script>
+      
+
+</div>
+</body>
+</html>
